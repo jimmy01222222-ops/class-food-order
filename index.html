@@ -898,28 +898,6 @@ async function loginAdmin() {
   }
 }
 
-
-      if (error) throw error;
-      adminSession = data.session;
-
-      // 以伺服器端管理員函式驗證身分；不是只看前端登入狀態。
-      await refreshStats();
-
-      $("adminLogin").classList.add("hidden");
-      $("adminPanel").classList.remove("hidden");
-      showMessage("loginMessage", "管理員登入成功。", true);
-    } catch (error) {
-      adminSession = null;
-      await client.auth.signOut();
-      showMessage(
-        "loginMessage",
-        "管理員登入失敗或沒有管理員權限：" + error.message
-      );
-    } finally {
-      $("adminLoginButton").disabled = false;
-    }
-  }
-
 async function setSeatPassword() {
   const seat = Number($("passwordSeat").value);
   const password = $("newSeatPassword").value;
