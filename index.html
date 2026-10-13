@@ -1,0 +1,1328 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#fff5f7">
+  <title>電二甲晚輔訂餐 🍱</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #fff7f2;
+      color: #493b50;
+      font-family: Arial, "Microsoft JhengHei", sans-serif;
+    }
+
+    header {
+      padding: 28px 18px;
+      text-align: center;
+      background: linear-gradient(135deg, #ffe0eb, #e9ddff);
+      border-bottom: 2px solid #f2d4e5;
+    }
+
+    header h1 { margin: 0 0 8px; font-size: 27px; }
+    header p { margin: 0; color: #826b91; font-size: 13px; }
+
+    main { max-width: 850px; margin: auto; padding: 18px; }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #f0dce8;
+      border-radius: 18px;
+      padding: 19px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 15px #8c547010;
+    }
+
+    h2 { font-size: 19px; margin: 0 0 15px; }
+    label { display: block; font-size: 14px; font-weight: bold; }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #e5cede;
+      background: #fffafd;
+      color: #493b50;
+      font-size: 15px;
+      margin: 7px 0 13px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 11px;
+      padding: 12px 16px;
+      background: #d875a6;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    button.secondary { background: #927bb6; }
+    button.light { background: #f5e6f0; color: #65445e; }
+    button.danger { background: #c45b68; }
+
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 0;
+      border-bottom: 1px solid #f2e5ee;
+    }
+
+    .menu-item:last-child { border-bottom: 0; }
+    .food-name { font-weight: bold; }
+    .price { color: #b85e91; margin-top: 5px; }
+    .menu-item input { width: 82px; margin: 0; text-align: center; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      background: #fff2f7;
+      padding: 13px;
+      border-radius: 12px;
+    }
+
+    .stat span { color: #927e98; font-size: 12px; }
+    .stat strong {
+      display: block;
+      font-size: 22px;
+      color: #b85e91;
+      margin-top: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .hint { color: #927e98; font-size: 13px; line-height: 1.7; }
+    .message { margin-top: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+    .good { color: #34835c; }
+    .bad { color: #bb4456; }
+    .tag {
+      display: inline-block;
+      background: #f4e7fb;
+      color: #7953a0;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .order-card {
+      background: #fff8fc;
+      border: 1px solid #f0dce8;
+      border-radius: 12px;
+      padding: 13px;
+      margin: 10px 0;
+      line-height: 1.8;
+      overflow-wrap: anywhere;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 480px) {
+      main { padding: 12px; }
+      .summary { grid-template-columns: 1fr; }
+      header h1 { font-size: 23px; }
+      .panel { padding: 15px; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>🍱 電二甲晚輔訂餐</h1>
+  <p>CLASS FOOD ORDER · 每天吃好一點 ♡</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>☁️ 今日訂餐狀態</h2>
+    <div id="connection" class="tag">正在連線雲端…</div>
+    <p id="cutoffInfo" class="hint">正在讀取訂餐截止時間…</p>
+    <p id="globalMessage" class="message" role="status"></p>
+  </section>
+
+  <section class="panel">
+    <h2>👤 同學訂餐</h2>
+
+    <label for="seat">你的座號（1～40）</label>
+    <input id="seat" type="number" min="1" max="40"
+           step="1" placeholder="例如：12" autocomplete="off">
+
+    <label for="accessCode">個人訂餐密碼</label>
+    <input id="accessCode" type="password"
+           placeholder="輸入訂餐密碼" autocomplete="current-password">
+
+    <p class="hint">
+      
+    <button id="studentLogin" type="button">學生登入</button>
+    <button id="studentLogout" type="button" class="light" hidden>登出</button>
+    <p id="studentLoginMessage" class="message" role="status"></p>
+    <p id="studentLoginStatus" class="hint">尚未登入，請先輸入座號與密碼。</p>
+
+      請使用自己的座號與密碼。送出訂單時，系統會驗證資料；
+      同一座號再次送出會更新原訂單。
+    </p>
+  </section>
+
+  <section class="panel hidden" id="orderingShop">
+    <h2>🏪 選擇商家</h2>
+    <label for="shop">今日商家</label>
+    <select id="shop">
+      <option value="">載入菜單中…</option>
+    </select>
+    <p id="menuMessage" class="hint">正在讀取雲端菜單…</p>
+  </section>
+
+  <section class="panel hidden" id="orderingMenu">
+    <h2>🍜 選擇餐點</h2>
+    <div id="menu"></div>
+    <div id="pricePreview" class="message">預估金額：$0</div>
+    <button id="submit" disabled>送出訂單</button>
+    <button id="clear" class="light" type="button">清空數量</button>
+    <div id="orderMessage" class="message" role="status"></div>
+  </section>
+
+  <section class="panel">
+    <h2>🔐 管理員登入</h2>
+    <p class="hint">
+      此區供管理員使用 Supabase Auth 帳號登入。
+      只有已登記在 admins 資料表的帳號才能查看全班訂單及設定截止時間。
+    </p>
+
+    
+<div id="passwordRecoveryPanel" class="hidden">
+  <h3>🔑 設定新密碼</h3>
+  <p class="hint">請輸入新的管理員密碼，至少 8 個字元。</p>
+
+  <label for="newAdminPassword">新密碼</label>
+  <input id="newAdminPassword" type="password"
+    minlength="8" autocomplete="new-password"
+    placeholder="輸入新密碼">
+
+  <label for="confirmAdminPassword">確認新密碼</label>
+  <input id="confirmAdminPassword" type="password"
+    minlength="8" autocomplete="new-password"
+    placeholder="再輸入一次新密碼">
+
+  <button id="updateAdminPassword">儲存新密碼</button>
+  <div id="recoveryMessage" class="message" role="status"></div>
+</div>
+
+    <div id="adminLogin">
+      <label for="adminEmail">管理員電子郵件</label>
+      <input id="adminEmail" type="email" placeholder="管理員登入 Email"
+             autocomplete="username">
+
+      <label for="adminPassword">管理員密碼</label>
+      <input id="adminPassword" type="password" placeholder="管理員登入密碼"
+             autocomplete="current-password">
+
+      <button id="adminLoginButton">管理員登入</button>
+      
+    <div id="loginMessage" class="message" role="status"></div>
+
+    </div>
+
+    
+<div id="passwordRecoveryPanel" class="hidden">
+  <h3>🔑 設定新密碼</h3>
+  <p class="hint">請輸入新的管理員密碼，至少 8 個字元。</p>
+
+  <label for="newAdminPassword">新密碼</label>
+  <input id="newAdminPassword" type="password"
+         minlength="8" autocomplete="new-password"
+         placeholder="輸入新密碼">
+
+  <label for="confirmAdminPassword">確認新密碼</label>
+  <input id="confirmAdminPassword" type="password"
+         minlength="8" autocomplete="new-password"
+         placeholder="再輸入一次新密碼">
+
+  <button id="updateAdminPassword">儲存新密碼</button>
+  <div id="recoveryMessage" class="message" role="status"></div>
+</div>
+
+
+    <div id="adminPanel" class="hidden">
+      <p class="good">已登入管理員帳號。</p>
+
+      <label for="cutoff">設定訂餐截止時間（台灣時間）</label>
+      <input id="cutoff" type="datetime-local">
+      <button id="saveCutoff">儲存截止時間</button>
+      <button id="removeCutoff" class="light">取消截止時間</button>
+      <button id="refreshStats" class="secondary">重新整理統計</button>
+      <button id="adminLogout" class="danger">登出</button>
+      
+    <hr>
+    <h3>🔐 同學個人密碼管理</h3>
+    <p class="hint">同學告訴你想設定的密碼後，選擇座號並設定。請勿將密碼公開給其他同學。</p>
+
+<label for="passwordSeat">選擇座號</label>
+<select id="passwordSeat">
+  <option value="">請選擇座號</option>
+  <option value="1">1 號</option>
+  <option value="2">2 號</option>
+  <option value="3">3 號</option>
+  <option value="4">4 號</option>
+  <option value="5">5 號</option>
+  <option value="6">6 號</option>
+  <option value="7">7 號</option>
+  <option value="8">8 號</option>
+  <option value="9">9 號</option>
+  <option value="10">10 號</option>
+  <option value="11">11 號</option>
+  <option value="12">12 號</option>
+  <option value="13">13 號</option>
+  <option value="14">14 號</option>
+  <option value="15">15 號</option>
+  <option value="16">16 號</option>
+  <option value="17">17 號</option>
+  <option value="18">18 號</option>
+  <option value="19">19 號</option>
+  <option value="20">20 號</option>
+  <option value="21">21 號</option>
+  <option value="22">22 號</option>
+  <option value="23">23 號</option>
+  <option value="24">24 號</option>
+  <option value="25">25 號</option>
+  <option value="26">26 號</option>
+  <option value="27">27 號</option>
+  <option value="28">28 號</option>
+  <option value="29">29 號</option>
+  <option value="30">30 號</option>
+  <option value="31">31 號</option>
+  <option value="32">32 號</option>
+  <option value="33">33 號</option>
+  <option value="34">34 號</option>
+  <option value="35">35 號</option>
+  <option value="36">36 號</option>
+  <option value="37">37 號</option>
+  <option value="38">38 號</option>
+  <option value="39">39 號</option>
+  <option value="40">40 號</option>
+</select>
+
+<label for="newSeatPassword">新密碼</label>
+<input id="newSeatPassword" type="password" autocomplete="new-password"
+       minlength="6" maxlength="72" placeholder="至少 6 個字元">
+
+<label for="confirmSeatPassword">再次輸入密碼</label>
+<input id="confirmSeatPassword" type="password" autocomplete="new-password"
+       minlength="6" maxlength="72" placeholder="再次確認密碼">
+
+<button id="saveSeatPassword">設定同學密碼</button>
+<div id="seatPasswordMessage" class="message" role="status"></div>
+      
+    
+<hr>
+<h3>🧪 測試學生密碼</h3>
+<p class="hint">只驗證密碼是否正確，不會新增或修改訂單。</p>
+
+<label for="testPasswordSeat">測試座號</label>
+<select id="testPasswordSeat">
+  <option value="">請選擇座號</option>
+  <option value="30">30 號</option>
+  <option value="31">31 號</option>
+  <option value="32">32 號</option>
+  <option value="33">33 號</option>
+  <option value="34">34 號</option>
+  <option value="35">35 號</option>
+  <option value="36">36 號</option>
+  <option value="37">37 號</option>
+  <option value="38">38 號</option>
+  <option value="39">39 號</option>
+  <option value="40">40 號</option>
+</select>
+
+<label for="testSeatPassword">測試密碼</label>
+<input id="testSeatPassword" type="password"
+       autocomplete="off" placeholder="輸入要驗證的密碼">
+
+<button id="testSeatPasswordButton" class="secondary">
+  驗證密碼
+</button>
+<div id="testSeatPasswordMessage" class="message" role="status"></div>
+
+
+      <hr>
+      <h3>🍱 菜單管理</h3>
+      <p class="hint">新增餐廳與餐點，儲存後學生就能看到菜單。</p>
+
+      <label for="menuRestaurant">餐廳名稱</label>
+      <input id="menuRestaurant" type="text" placeholder="例如：幸福便當">
+
+      <label for="menuCategory">餐點分類</label>
+      <select id="menuCategory">
+        <option value="主餐">主餐</option>
+        <option value="飲料">飲料</option>
+        <option value="其他">其他</option>
+      </select>
+
+      <label for="menuItemName">餐點名稱</label>
+      <input id="menuItemName" type="text" placeholder="例如：雞腿便當">
+
+      <label for="menuItemPrice">價格（元）</label>
+      <input id="menuItemPrice" type="number" min="1" step="1" placeholder="例如：100">
+
+      <button id="addMenuItem">新增餐點</button>
+      <div id="menuAdminMessage" class="message" role="status"></div>
+
+      <h4>目前菜單</h4>
+      <div id="adminMenuList"></div>
+
+      <h3>📊 全班訂單統計</h3>
+      <div class="summary">
+        <div class="stat">
+          <span>訂餐人數</span>
+          <strong id="people">0</strong>
+        </div>
+        <div class="stat">
+          <span>餐點總數</span>
+          <strong id="quantity">0</strong>
+        </div>
+        <div class="stat">
+          <span>訂餐總金額</span>
+          <strong id="total">$0</strong>
+        </div>
+      </div>
+
+      <h3>📦 各餐點總份數</h3>
+      <div id="itemTotals"></div>
+
+      <h3>🧾 每位同學的訂單</h3>
+      <div id="orderDetails"></div>
+    </div>
+  </section>
+
+  <p class="hint">
+    電二甲晚輔訂餐系統 · 雲端資料由 Supabase 提供
+  </p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  "use strict";
+
+  // 這裡使用 Supabase 專案 URL 與 publishable key。
+  // 不要在前端放 service_role 或 secret key。
+  const SUPABASE_URL = "https://elhymrmxjbrpcsitnlyd.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_6gHc_o8qsXGBOJm6T7uXZA_JuGuCZ0J";
+
+  const $ = id => document.getElementById(id);
+  const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  let menus = {};
+  let cutoffTime = null;
+  let adminSession = null;
+  let studentSession = null;
+  
+  let recoveryMode = false;
+
+  client.auth.onAuthStateChange((event) => {
+    if (event === "PASSWORD_RECOVERY") {
+      recoveryMode = true;
+      $("passwordRecoveryPanel").classList.remove("hidden");
+      $("adminLogin").classList.add("hidden");
+      $("adminPanel").classList.add("hidden");
+      showMessage(
+        "recoveryMessage",
+        "驗證成功，請設定新的管理員密碼。",
+        true
+      );
+    }
+  });
+
+  $("updateAdminPassword").addEventListener("click", async () => {
+    const password = $("newAdminPassword").value;
+    const confirmPassword = $("confirmAdminPassword").value;
+    const button = $("updateAdminPassword");
+
+    if (!recoveryMode) {
+      showMessage("recoveryMessage", "請先點擊最新的有效重設密碼連結。");
+      return;
+    }
+
+    if (password.length < 8) {
+      showMessage("recoveryMessage", "新密碼至少需要 8 個字元。");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showMessage("recoveryMessage", "兩次輸入的密碼不一致。");
+      return;
+    }
+
+    button.disabled = true;
+
+    try {
+      const { error } = await client.auth.updateUser({
+        password: password
+      });
+
+      if (error) throw error;
+
+      showMessage(
+        "recoveryMessage",
+        "密碼修改成功！請回到管理員登入區，使用新密碼登入。",
+        true
+      );
+
+      await client.auth.signOut();
+      recoveryMode = false;
+      $("passwordRecoveryPanel").classList.add("hidden");
+      $("adminLogin").classList.remove("hidden");
+      $("adminPassword").value = "";
+      $("newAdminPassword").value = "";
+      $("confirmAdminPassword").value = "";
+      showMessage("loginMessage", "密碼已更新，請使用新密碼登入。", true);
+    } catch (error) {
+      showMessage(
+        "recoveryMessage",
+        "更新失敗：" + (error.message || "請重新取得有效的重設連結。")
+      );
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+
+  function showMessage(id, text, good = false) {
+    const el = $(id);
+    el.textContent = text;
+    el.className = "message " + (good ? "good" : "bad");
+  }
+
+  function isClosed() {
+    return cutoffTime !== null && Date.now() >= cutoffTime.getTime();
+  }
+
+  function updateCutoffDisplay() {
+    const info = $("cutoffInfo");
+
+    if (!cutoffTime) {
+      info.textContent = "目前尚未設定截止時間。請留意老師公告。";
+    } else {
+      info.textContent = "訂餐截止：" +
+        cutoffTime.toLocaleString("zh-TW", { hour12: false }) +
+        (isClosed() ? "（已截止）" : "（尚未截止）");
+    }
+
+    $("submit").disabled = isClosed() || !Object.keys(menus).length;
+  }
+
+async function loginStudent() {
+  const seat = Number($("seat").value);
+  const code = $("accessCode").value;
+
+  if (!Number.isInteger(seat) || seat < 1 || seat > 40) {
+    showMessage("studentLoginMessage", "請輸入有效座號（1～40）。");
+    return;
+  }
+
+  if (!code) {
+    showMessage("studentLoginMessage", "請輸入個人訂餐密碼。");
+    return;
+  }
+
+  $("studentLogin").disabled = true;
+  showMessage("studentLoginMessage", "正在驗證登入資料…");
+
+  try {
+    const { data, error } = await client.rpc("student_login", {
+      p_seat_number: seat,
+      p_access_code: code
+    });
+
+    if (error) throw error;
+
+    if (!data || data.success !== true) {
+      throw new Error("座號或密碼錯誤。");
+    }
+
+    studentSession = { seat: seat };
+    $("orderingShop").classList.remove("hidden");
+    $("orderingMenu").classList.remove("hidden");
+
+    $("seat").disabled = true;
+    $("accessCode").disabled = true;
+    $("studentLogin").hidden = true;
+    $("studentLogout").hidden = false;
+
+    $("studentLoginStatus").textContent =
+      `${seat} 號同學，登入成功！`;
+
+    showMessage("studentLoginMessage", "登入成功！", true);
+  } catch (error) {
+    studentSession = null;
+    showMessage(
+      "studentLoginMessage",
+      "登入失敗：" + error.message
+    );
+  } finally {
+    $("studentLogin").disabled = false;
+  }
+}
+
+function logoutStudent() {
+  studentSession = null;
+  $("orderingShop").classList.add("hidden");
+  $("orderingMenu").classList.add("hidden");
+    $("submit").disabled = true;
+  $("menu").querySelectorAll("input").forEach(input => {
+    input.value = "0";
+  });
+updatePricePreview();
+$("shop").value = "";
+  $("seat").disabled = false;
+  $("accessCode").disabled = false;
+
+  $("seat").value = "";
+  $("accessCode").value = "";
+
+  $("studentLogin").hidden = false;
+  $("studentLogout").hidden = true;
+
+  $("studentLoginStatus").textContent =
+    "尚未登入，請先輸入座號與密碼。";
+
+  showMessage("studentLoginMessage", "");
+  showMessage("orderMessage", "");
+}
+
+  async function loadSettings() {
+    const { data, error } = await client
+      .from("daily_settings")
+      .select("id, order_cutoff")
+      .eq("id", 1)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error("讀取截止時間失敗：" + error.message);
+    }
+
+    cutoffTime = data && data.order_cutoff
+      ? new Date(data.order_cutoff)
+      : null;
+
+    if (cutoffTime && Number.isNaN(cutoffTime.getTime())) {
+      cutoffTime = null;
+    }
+
+    $("cutoff").value = cutoffTime
+      ? new Date(
+          cutoffTime.getTime() -
+          new Date().getTimezoneOffset() * 60000
+        ).toISOString().slice(0, 16)
+      : "";
+
+    updateCutoffDisplay();
+  }
+  async function loadMenus(){
+    const { data, error } = await client
+      .from("menu_items")
+      .select("id, restaurant_name, name, category, price, menu_date")
+      .order("restaurant_name")
+      .order("name");
+
+    if (error) {
+      throw new Error("讀取菜單失敗：" + error.message);
+    }
+
+    menus = {};
+    (data || []).forEach(food => {
+      if (!menus[food.restaurant_name]) {
+        menus[food.restaurant_name] = [];
+      }
+      menus[food.restaurant_name].push(food);
+    });
+
+    const shop = $("shop");
+    shop.replaceChildren();
+
+    Object.keys(menus).sort().forEach(name => {
+      const option = document.createElement("option");
+      option.value = name;
+      option.textContent = name;
+      shop.appendChild(option);
+    });
+
+    if (!Object.keys(menus).length) {
+      $("menuMessage").textContent =
+        "今天沒有找到菜單。請管理員確認 menu_items 的 menu_date 是否為台灣今天日期。";
+      $("submit").disabled = true;
+      $("menu").replaceChildren();
+      updatePricePreview();
+      return;
+    }
+
+    $("menuMessage").textContent = "已載入雲端菜單。";
+    renderMenu();
+    $("submit").disabled = isClosed();
+  }
+
+  function renderMenu() {
+    const menu = $("menu");
+    menu.replaceChildren();
+
+    const foods = menus[$("shop").value] || [];
+
+    foods.forEach((food, index) => {
+      const row = document.createElement("div");
+      row.className = "menu-item";
+
+      const info = document.createElement("div");
+      const name = document.createElement("div");
+      name.className = "food-name";
+      name.textContent = food.name;
+
+      const price = document.createElement("div");
+      price.className = "price";
+      price.textContent = "$" + Number(food.price).toLocaleString();
+
+      info.append(name, price);
+
+      const qty = document.createElement("input");
+      qty.type = "number";
+      qty.min = "0";
+      qty.max = "20";
+      qty.step = "1";
+      qty.value = "0";
+      qty.dataset.foodId = food.id;
+      qty.setAttribute("aria-label", food.name + "數量");
+      qty.addEventListener("input", updatePricePreview);
+
+      row.append(info, qty);
+      menu.appendChild(row);
+    });
+
+    updatePricePreview();
+  }
+
+  function updatePricePreview() {
+    let total = 0;
+    const foods = menus[$("shop").value] || [];
+    const inputs = $("menu").querySelectorAll("input[data-food-id]");
+
+    inputs.forEach(input => {
+      const qty = Number(input.value);
+      const food = foods.find(item => item.id === input.dataset.foodId);
+      if (food && Number.isInteger(qty) && qty > 0 && qty <= 20) {
+        total += Number(food.price) * qty;
+      }
+    });
+
+    $("pricePreview").textContent =
+      "預估金額：$" + total.toLocaleString();
+  }
+
+  function getSelectedItems() {
+    const foods = menus[$("shop").value] || [];
+    const inputs = $("menu").querySelectorAll("input[data-food-id]");
+    const items = [];
+
+    for (const input of inputs) {
+      const qty = Number(input.value);
+
+      if (!Number.isInteger(qty) || qty < 0 || qty > 20) {
+        throw new Error("每項餐點數量只能填 0～20 的整數。");
+      }
+
+      if (qty > 0) {
+        const food = foods.find(item => item.id === input.dataset.foodId);
+        if (!food) throw new Error("找不到所選餐點，請重新整理菜單。");
+
+        // 不把價格交給前端決定；資料庫函式會依雲端菜單計價。
+        items.push({ name: food.name, qty });
+      }
+    }
+
+    if (!items.length) throw new Error("請至少選擇一份餐點。");
+    return items;
+  }
+
+  async function submitOrder() {
+    if (!studentSession) {
+      showMessage("orderMessage", "請先登入學生帳號才能點餐。");
+      return;
+    }
+    const seat = Number($("seat").value);
+    const code = $("accessCode").value;
+    const message = $("orderMessage");
+
+    if (!Number.isInteger(seat) || seat < 1 || seat > 40) {
+      showMessage("orderMessage", "請輸入有效座號（1～40）。");
+      return;
+    }
+
+    if (!code) {
+      showMessage("orderMessage", "請輸入訂餐密碼。");
+      return;
+    }
+
+    if (!$("shop").value) {
+      showMessage("orderMessage", "目前沒有可用菜單。");
+      return;
+    }
+
+    if (isClosed()) {
+      showMessage("orderMessage", "訂餐時間已截止，無法送單或修改。");
+      return;
+    }
+
+    let items;
+    try {
+      items = getSelectedItems();
+    } catch (error) {
+      showMessage("orderMessage", error.message);
+      return;
+    }
+
+    $("submit").disabled = true;
+    message.textContent = "正在安全送出訂單…";
+
+    try {
+      const { data, error } = await client.rpc("submit_class_order", {
+        p_seat_number: seat,
+        p_access_code: code,
+        p_restaurant_name: $("shop").value,
+        p_items: items
+      });
+
+      if (error) throw error;
+
+      showMessage(
+        "orderMessage",
+        "訂單已送出！若此座號之前已有訂單，系統會更新原訂單。",
+        true
+      );
+
+      $("menu").querySelectorAll("input").forEach(input => {
+        input.value = "0";
+      });
+      updatePricePreview();
+
+      if (adminSession) await refreshStats();
+    } catch (error) {
+      showMessage(
+        "orderMessage",
+        "送單失敗：" + (error.message || "請確認座號、密碼、菜單與截止時間。")
+      );
+    } finally {
+      $("submit").disabled = isClosed() || !Object.keys(menus).length;
+    }
+  }
+
+  async function loginAdmin() {
+    const email = $("adminEmail").value.trim();
+    const password = $("adminPassword").value;
+
+    if (!email || !password) {
+      showMessage("loginMessage", "請輸入管理員 Email 與密碼。");
+      return;
+    }
+
+    $("adminLoginButton").disabled = true;
+
+    try {
+      const { data, error } = await client.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+      adminSession = data.session;
+
+      // 以伺服器端管理員函式驗證身分；不是只看前端登入狀態。
+      await refreshStats();
+
+      $("adminLogin").classList.add("hidden");
+      $("adminPanel").classList.remove("hidden");
+      showMessage("loginMessage", "管理員登入成功。", true);
+    } catch (error) {
+      adminSession = null;
+      await client.auth.signOut();
+      showMessage(
+        "loginMessage",
+        "管理員登入失敗或沒有管理員權限：" + error.message
+      );
+    } finally {
+      $("adminLoginButton").disabled = false;
+    }
+  }
+
+async function setSeatPassword() {
+  const seat = Number($("passwordSeat").value);
+  const password = $("newSeatPassword").value;
+  const confirmPassword = $("confirmSeatPassword").value;
+
+  if (!adminSession) {
+    showMessage("seatPasswordMessage", "請先登入管理員帳號。");
+    return;
+  }
+
+  if (!seat || seat < 1 || seat > 40) {
+    showMessage("seatPasswordMessage", "請先選擇有效座號。");
+    return;
+  }
+
+  if (password.length < 6 || password.length > 72) {
+    showMessage("seatPasswordMessage", "密碼長度必須為 6～72 個字元。");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    showMessage("seatPasswordMessage", "兩次輸入的密碼不一致。");
+    return;
+  }
+
+  $("saveSeatPassword").disabled = true;
+
+  try {
+    const { data, error } = await client.rpc("admin_set_seat_password", {
+      p_seat_number: seat,
+      p_new_password: password
+    });
+
+    if (error) throw error;
+
+    if (!data || data.success !== true) {
+      throw new Error("伺服器未確認設定成功。");
+    }
+
+    showMessage(
+      "seatPasswordMessage",
+      `${seat} 號同學的密碼已設定成功！`,
+      true
+    );
+
+    $("newSeatPassword").value = "";
+    $("confirmSeatPassword").value = "";
+    $("passwordSeat").value = "";
+  } catch (error) {
+    showMessage(
+      "seatPasswordMessage",
+      "設定失敗：" + error.message
+    );
+
+ 
+  } finally {
+    $("saveSeatPassword").disabled = false;
+  }
+}
+
+$("saveSeatPassword").addEventListener("click", setSeatPassword);
+
+async function testSeatPassword() {
+  const seat = Number($("testPasswordSeat").value);
+  const password = $("testSeatPassword").value;
+
+  if (!adminSession) {
+    showMessage("testSeatPasswordMessage", "請先登入管理員帳號。");
+    return;
+  }
+
+  if (!seat || !password) {
+    showMessage("testSeatPasswordMessage", "請選擇座號並輸入密碼。");
+    return;
+  }
+
+  $("testSeatPasswordButton").disabled = true;
+
+  try {
+    const { data, error } = await client.rpc("verify_seat_password", {
+      p_seat_number: seat,
+      p_access_code: password
+    });
+
+    if (error) throw error;
+
+    if (data === true) {
+      showMessage(
+        "testSeatPasswordMessage",
+        "驗證成功！此座號的密碼正確。",
+        true
+      );
+    } else {
+      showMessage(
+        "testSeatPasswordMessage",
+        "驗證失敗：密碼不正確，或該座號尚未啟用。"
+      );
+    }
+  } catch (error) {
+    showMessage(
+      "testSeatPasswordMessage",
+      "測試失敗：" + error.message
+    );
+  } finally {
+    $("testSeatPasswordButton").disabled = false;
+    $("testSeatPassword").value = "";
+  }
+}
+
+$("testSeatPasswordButton").addEventListener("click", testSeatPassword);
+
+
+
+  async function refreshStats() {
+    const { data, error } = await client.rpc("admin_get_order_stats");
+    if (error) throw error;
+
+    const result = data || {};
+    const orders = Array.isArray(result.orders) ? result.orders : [];
+    const totals = Array.isArray(result.item_totals)
+      ? result.item_totals
+      : [];
+
+    $("people").textContent = orders.length;
+
+    let quantity = 0;
+    let total = 0;
+
+    orders.forEach(order => {
+      total += Number(order.total_amount) || 0;
+      const items = Array.isArray(order.items) ? order.items : [];
+      items.forEach(item => {
+        quantity += Number(item.qty) || 0;
+      });
+    });
+
+    $("quantity").textContent = quantity;
+    $("total").textContent = "$" + total.toLocaleString();
+
+    const totalsBox = $("itemTotals");
+    totalsBox.replaceChildren();
+
+    if (!totals.length) {
+      totalsBox.textContent = "目前沒有餐點統計。";
+    } else {
+      totals.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "order-card";
+        card.textContent =
+          (item.restaurant_name || "") + "｜" +
+          (item.name || "未命名餐點") + "： " +
+          (Number(item.quantity) || 0) + " 份";
+        totalsBox.appendChild(card);
+      });
+    }
+
+    const details = $("orderDetails");
+    details.replaceChildren();
+
+    if (!orders.length) {
+      details.textContent = "目前沒有訂單。";
+    } else {
+      orders.sort((a, b) =>
+        Number(a.seat_number) - Number(b.seat_number)
+      );
+
+      orders.forEach(order => {
+        const card = document.createElement("div");
+        card.className = "order-card";
+
+        const heading = document.createElement("strong");
+        heading.textContent =
+          "座號 " + order.seat_number + "｜" +
+          (order.restaurant_name || "未指定商家");
+        card.appendChild(heading);
+
+        const items = Array.isArray(order.items) ? order.items : [];
+        items.forEach(item => {
+          const line = document.createElement("div");
+          const qty = Number(item.qty) || 0;
+          const price = Number(item.price) || 0;
+          line.textContent =
+            (item.name || "餐點") + " × " + qty +
+            (price ? "（$" + (price * qty).toLocaleString() + "）" : "");
+          card.appendChild(line);
+        });
+
+        const amount = document.createElement("div");
+        amount.textContent =
+          "訂單金額：$" +
+          (Number(order.total_amount) || 0).toLocaleString();
+        card.appendChild(amount);
+
+        details.appendChild(card);
+      });
+    }
+  }
+
+  async function saveCutoff() {
+    const value = $("cutoff").value;
+
+    if (!value) {
+      showMessage("adminMessage", "請先選擇截止日期與時間。");
+      return;
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      showMessage("adminMessage", "截止時間格式不正確。");
+      return;
+    }
+
+    try {
+      const { error } = await client.rpc("admin_set_order_cutoff", {
+        p_cutoff: date.toISOString()
+      });
+
+      if (error) throw error;
+      await loadSettings();
+      showMessage("adminMessage", "截止時間已儲存。", true);
+    } catch (error) {
+      showMessage("adminMessage", "儲存失敗：" + error.message);
+    }
+  }
+
+  async function removeCutoff() {
+    try {
+      const { error } = await client.rpc("admin_set_order_cutoff", {
+        p_cutoff: null
+      });
+
+      if (error) throw error;
+      await loadSettings();
+      showMessage("adminMessage", "已取消截止時間。", true);
+    } catch (error) {
+      showMessage("adminMessage", "取消失敗：" + error.message);
+    }
+  }
+
+  async function logoutAdmin() {
+    await client.auth.signOut();
+    adminSession = null;
+    $("adminPanel").classList.add("hidden");
+    $("adminLogin").classList.remove("hidden");
+    showMessage("adminMessage", "已登出。", true);
+  }
+  
+  $("studentLogin").addEventListener("click", loginStudent);
+  $("studentLogout").addEventListener("click", logoutStudent);
+  $("submit").addEventListener("click", submitOrder);
+  $("shop").addEventListener("change", renderMenu);
+
+  $("clear").addEventListener("click", () => {
+    $("menu").querySelectorAll("input").forEach(input => {
+      input.value = "0";
+    });
+    updatePricePreview();
+  });
+
+  $("adminLoginButton").addEventListener("click", loginAdmin);
+  $("saveCutoff").addEventListener("click", saveCutoff);
+  $("removeCutoff").addEventListener("click", removeCutoff);
+  $("addMenuItem").addEventListener("click", addMenuItem);
+  $("refreshStats").addEventListener("click", async () => {
+    try {
+      await refreshStats();
+      showMessage("adminMessage", "統計已更新。", true);
+    } catch (error) {
+      showMessage("adminMessage", "讀取統計失敗：" + error.message);
+    }
+  });
+  $("adminLogout").addEventListener("click", logoutAdmin);
+
+    async function addMenuItem() {
+    const restaurant = $("menuRestaurant").value.trim();
+    const menuDate = $("menuDate").value;
+    const category = $("menuCategory").value;
+    const name = $("menuItemName").value.trim();
+    const price = Number($("menuItemPrice").value);
+
+    if (!restaurant || !name || $("menuItemPrice").value === "") {
+      showMessage("menuAdminMessage", "請填寫餐廳、日期、餐點名稱與價格。");
+      return;
+    }
+
+    if (!Number.isInteger(price) || price < 1) {
+      showMessage("menuAdminMessage", "價格必須是大於 0 的整數。");
+      return;
+    }
+
+    const button = $("addMenuItem");
+    button.disabled = true;
+
+    try {
+      const { data: { user }, error: userError } =
+        await client.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error("請先登入管理員帳號。");
+      }
+
+      const { error } = await client
+        .from("menu_items")
+        .insert([{
+        restaurant_name: restaurant,
+        category: category,
+        name: name,
+        price: price
+    }]);
+
+      if (error) throw error;
+
+      showMessage("menuAdminMessage", "餐點新增成功！", true);
+      $("menuItemName").value = "";
+      $("menuItemPrice").value = "";
+    await loadAdminMenuList();
+    await loadMenus();
+    } catch (error) {
+      showMessage("menuAdminMessage", "新增失敗：" + error.message);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+
+  async function loadAdminMenuList() {
+    
+    $("adminMenuList").textContent = "正在讀取菜單...";
+
+    try {
+      const { data, error } = await client
+        .from("menu_items")
+        .select("id, restaurant_name, name, category, price")
+        .order("restaurant_name")
+        .order("name");
+
+      if (error) throw error;
+
+      const list = $("adminMenuList");
+      list.replaceChildren();
+
+      if (!data || data.length === 0) {
+        list.textContent = "目前還沒有餐點。";
+        return;
+      }
+
+      data.forEach(food => {
+        const item = document.createElement("div");
+        item.style.marginBottom = "16px";
+        item.style.padding = "12px";
+        item.style.border = "1px solid #ddd";
+        item.style.borderRadius = "10px";
+
+        const restaurantLabel = document.createElement("p");
+        restaurantLabel.textContent = "餐廳：" + food.restaurant_name;
+        item.appendChild(restaurantLabel);
+
+        const categoryLabel = document.createElement("label");
+        categoryLabel.textContent = "餐點分類";
+        item.appendChild(categoryLabel);
+
+        const category = document.createElement("select");
+        ["主餐", "飲料", "其他"].forEach(value => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          category.appendChild(option);
+        });
+        category.value = food.category || "主餐";
+        item.appendChild(category);
+
+        const nameLabel = document.createElement("label");
+        nameLabel.textContent = "餐點名稱";
+        item.appendChild(nameLabel);
+
+        const name = document.createElement("input");
+        name.type = "text";
+        name.value = food.name;
+        item.appendChild(name);
+
+        const priceLabel = document.createElement("label");
+        priceLabel.textContent = "價格（元）";
+        item.appendChild(priceLabel);
+
+        const price = document.createElement("input");
+        price.type = "number";
+        price.min = "1";
+        price.step = "1";
+        price.value = food.price;
+        item.appendChild(price);
+
+        const saveButton = document.createElement("button");
+        saveButton.textContent = "儲存修改";
+        saveButton.addEventListener("click", async () => {
+          const newName = name.value.trim();
+          const newPrice = Number(price.value);
+
+          if (!newName) {
+            alert("請輸入餐點名稱。");
+            return;
+          }
+
+          if (!Number.isInteger(newPrice) || newPrice < 1) {
+            alert("價格必須是大於 0 的整數。");
+            return;
+          }
+
+          saveButton.disabled = true;
+          saveButton.textContent = "儲存中...";
+
+          try {
+            const { error: updateError } = await client
+              .from("menu_items")
+              .update({
+                name: newName,
+                price: newPrice,
+                category: category.value
+              })
+              .eq("id", food.id);
+
+            if (updateError) throw updateError;
+
+            alert("餐點修改成功！");
+            await loadAdminMenuList();
+            await loadMenus();
+          } catch (error) {
+            alert("修改失敗：" + error.message);
+          } finally {
+            saveButton.disabled = false;
+            saveButton.textContent = "儲存修改";
+          }
+        });
+
+        item.appendChild(saveButton);
+        list.appendChild(item);
+      });
+    } catch (error) {
+      $("adminMenuList").textContent =
+        "讀取菜單失敗：" + error.message;
+    }
+  }
+
+  async function init() {
+    try {
+      await loadSettings();
+      await loadMenus();
+
+      $("connection").textContent = "雲端已連線";
+      $("connection").style.background = "#e2f5e9";
+      $("connection").style.color = "#28744c";
+    } catch (error) {
+      $("connection").textContent = "連線或讀取失敗";
+      showMessage("globalMessage", error.message);
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
