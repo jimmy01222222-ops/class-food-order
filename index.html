@@ -1323,23 +1323,12 @@ $("testSeatPasswordButton").addEventListener("click", testSeatPassword);
 
   init();
 })();
-
 $("refreshStats").addEventListener("click", async () => {
-  const button = $("refreshStats");
-  button.disabled = true;
-  button.textContent = "正在更新…";
-
   try {
     await refreshStats();
-    showMessage("loginMessage", "統計更新成功！", true);
+    showMessage("adminMessage", "統計已更新。", true);
   } catch (error) {
-    showMessage(
-      "loginMessage",
-      "統計更新失敗：" + (error.message || "未知錯誤")
-    );
-  } finally {
-    button.disabled = false;
-    button.textContent = "重新整理統計";
+    showMessage("adminMessage", "讀取統計失敗：" + error.message);
   }
 });
 </script>
