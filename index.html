@@ -1329,14 +1329,6 @@ $("testSeatPasswordButton").addEventListener("click", testSeatPassword);
 
   init();
 })();
-$("refreshStats").addEventListener("click", async () => {
-  try {
-    await refreshStats();
-    showMessage("adminMessage", "統計已更新。", true);
-  } catch (error) {
-    showMessage("adminMessage", "讀取統計失敗：" + error.message);
-  }
-});
-<script>
+</script>
 </body>
 </html>
