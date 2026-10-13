@@ -837,22 +837,67 @@ $("shop").value = "";
     }
   }
 
-  async function loginAdmin() {
-    const email = $("adminEmail").value.trim();
-    const password = $("adminPassword").value;
+  
+async function loginAdmin() {
+  const email = $("adminEmail").value.trim();
+  const password = $("adminPassword").value;
 
-    if (!email || !password) {
-      showMessage("loginMessage", "請輸入管理員 Email 與密碼。");
-      return;
+  if (!email || !password) {
+    showMessage("loginMessage", "請輸入管理員 Email 與密碼。");
+    return;
+  }
+
+  $("adminLoginButton").disabled = true;
+
+  try {
+    // 1. 使用 Email 與密碼登入 Supabase
+    const { data, error } = await client.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+    if (!data.user || !data.session) {
+      throw new Error("登入未完成，請重新嘗試。");
     }
 
-    $("adminLoginButton").disabled = true;
+    // 2. 由資料庫確認這個 UID 是否在 admins 表
+    const { data: admin, error: adminError } = await client
+      .from("admins")
+      .select("user_id")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
 
-    try {
-      const { data, error } = await client.auth.signInWithPassword({
-        email,
-        password
-      });
+    if (adminError) throw adminError;
+
+    if (!admin) {
+      throw new Error("此帳號不在管理員名單中。");
+    }
+
+    // 3. 通過 UID 檢查後，才載入管理資料
+    adminSession = data.session;
+    await refreshStats();
+
+    $("adminLogin").classList.add("hidden");
+    $("adminPanel").classList.remove("hidden");
+    showMessage("loginMessage", "管理員登入成功。", true);
+
+  } catch (error) {
+    adminSession = null;
+
+    // 驗證失敗時清除剛建立的登入狀態
+    await client.auth.signOut();
+
+    showMessage(
+      "loginMessage",
+      "管理員登入失敗或沒有管理員權限：" +
+      (error.message || "未知錯誤")
+    );
+  } finally {
+    $("adminLoginButton").disabled = false;
+  }
+}
+
 
       if (error) throw error;
       adminSession = data.session;
