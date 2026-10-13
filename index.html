@@ -502,12 +502,20 @@
   });
 
 function showMessage(id, text, good = false) {
-  const el = $(id);
+  const el = document.getElementById(id);
 
   if (!el) {
-    console.error("找不到訊息顯示區：", id, text);
+    console.error("找不到訊息區：", id);
+    console.log(
+      "目前頁面中的訊息區：",
+      [...document.querySelectorAll('[id$="Message"]')].map(item => item.id)
+    );
     return;
   }
+
+  el.textContent = text;
+  el.className = "message " + (good ? "good" : "bad");
+}
 
   el.textContent = text;
   el.className = "message " + (good ? "good" : "bad");
