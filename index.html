@@ -699,7 +699,7 @@ $("shop").value = "";
       const qty = document.createElement("input");
       qty.type = "number";
       qty.min = "0";
-      qty.max = "20";
+      qty.max = "99";
       qty.step = "1";
       qty.value = "0";
       qty.dataset.foodId = food.id;
@@ -721,7 +721,7 @@ $("shop").value = "";
     inputs.forEach(input => {
       const qty = Number(input.value);
       const food = foods.find(item => item.id === input.dataset.foodId);
-      if (food && Number.isInteger(qty) && qty > 0 && qty <= 20) {
+      if (food && Number.isInteger(qty) && qty > 0 && qty <= 99) {
         total += Number(food.price) * qty;
       }
     });
@@ -738,8 +738,8 @@ $("shop").value = "";
     for (const input of inputs) {
       const qty = Number(input.value);
 
-      if (!Number.isInteger(qty) || qty < 0 || qty > 20) {
-        throw new Error("每項餐點數量只能填 0～20 的整數。");
+      if (!Number.isInteger(qty) || qty < 0 || qty > 99) {
+        throw new Error("每項餐點數量只能填 0～99 的整數。");
       }
 
       if (qty > 0) {
