@@ -525,7 +525,7 @@ function showMessage(id, text, good = false) {
     const info = $("cutoffInfo");
 
     if (!cutoffTime) {
-      info.textContent = "目前尚未設定截止時間。請留意老師公告。";
+      info.textContent = "目前尚未設定截止時間。請留意總務股長公告。";
     } else {
       info.textContent = "訂餐截止：" +
         cutoffTime.toLocaleString("zh-TW", { hour12: false }) +
@@ -545,7 +545,7 @@ async function loginStudent() {
   }
 
   if (!code) {
-    showMessage("studentLoginMessage", "請輸入個人訂餐密碼。");
+    showMessage("studentLoginMessage", "請輸入帳號密碼。");
     return;
   }
 
@@ -780,7 +780,7 @@ $("shop").value = "";
     }
 
     if (!code) {
-      showMessage("orderMessage", "請輸入訂餐密碼。");
+      showMessage("orderMessage", "輸入密碼。");
       return;
     }
 
