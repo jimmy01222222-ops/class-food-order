@@ -517,11 +517,6 @@ function showMessage(id, text, good = false) {
   el.className = "message " + (good ? "good" : "bad");
 }
 
-  el.textContent = text;
-  el.className = "message " + (good ? "good" : "bad");
-}
-
-
   function isClosed() {
     return cutoffTime !== null && Date.now() >= cutoffTime.getTime();
   }
