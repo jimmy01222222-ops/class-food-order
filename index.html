@@ -1182,7 +1182,7 @@ $("testSeatPasswordButton").addEventListener("click", testSeatPassword);
       return;
     }
 
-    if (!Number.isInteger(price) || price < 1) {
+    if (!Number.isInteger(price) || price < 0.1) {
       showMessage("menuAdminMessage", "價格必須是大於 0 的整數。");
       return;
     }
