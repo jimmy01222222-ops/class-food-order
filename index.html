@@ -1224,122 +1224,163 @@ $("testSeatPasswordButton").addEventListener("click", testSeatPassword);
   }
 
 
-  async function loadAdminMenuList() {
-    
-    $("adminMenuList").textContent = "正在讀取菜單...";
+ 
+async function loadAdminMenuList() {
+  $("adminMenuList").textContent = "正在讀取菜單...";
 
-    try {
-      const { data, error } = await client
-        .from("menu_items")
-        .select("id, restaurant_name, name, category, price")
-        .order("restaurant_name")
-        .order("name");
+  try {
+    const { data, error } = await client
+      .from("menu_items")
+      .select("id, restaurant_name, name, category, price")
+      .order("restaurant_name")
+      .order("name");
 
-      if (error) throw error;
+    if (error) throw error;
 
-      const list = $("adminMenuList");
-      list.replaceChildren();
+    const list = $("adminMenuList");
+    list.replaceChildren();
 
-      if (!data || data.length === 0) {
-        list.textContent = "目前還沒有餐點。";
-        return;
-      }
-
-      data.forEach(food => {
-        const item = document.createElement("div");
-        item.style.marginBottom = "16px";
-        item.style.padding = "12px";
-        item.style.border = "1px solid #ddd";
-        item.style.borderRadius = "10px";
-
-        const restaurantLabel = document.createElement("p");
-        restaurantLabel.textContent = "餐廳：" + food.restaurant_name;
-        item.appendChild(restaurantLabel);
-
-        const categoryLabel = document.createElement("label");
-        categoryLabel.textContent = "餐點分類";
-        item.appendChild(categoryLabel);
-
-        const category = document.createElement("select");
-        ["主餐", "飲料", "其他"].forEach(value => {
-          const option = document.createElement("option");
-          option.value = value;
-          option.textContent = value;
-          category.appendChild(option);
-        });
-        category.value = food.category || "主餐";
-        item.appendChild(category);
-
-        const nameLabel = document.createElement("label");
-        nameLabel.textContent = "餐點名稱";
-        item.appendChild(nameLabel);
-
-        const name = document.createElement("input");
-        name.type = "text";
-        name.value = food.name;
-        item.appendChild(name);
-
-        const priceLabel = document.createElement("label");
-        priceLabel.textContent = "價格（元）";
-        item.appendChild(priceLabel);
-
-        const price = document.createElement("input");
-        price.type = "number";
-        price.min = "1";
-        price.step = "1";
-        price.value = food.price;
-        item.appendChild(price);
-
-        const saveButton = document.createElement("button");
-        saveButton.textContent = "儲存修改";
-        saveButton.addEventListener("click", async () => {
-          const newName = name.value.trim();
-          const newPrice = Number(price.value);
-
-          if (!newName) {
-            alert("請輸入餐點名稱。");
-            return;
-          }
-
-          if (!Number.isInteger(newPrice) || newPrice < 0.1) {
-            alert("價格必須是大於 0 的數字。");
-            return;
-          }
-
-          saveButton.disabled = true;
-          saveButton.textContent = "儲存中...";
-
-          try {
-            const { error: updateError } = await client
-              .from("menu_items")
-              .update({
-                name: newName,
-                price: newPrice,
-                category: category.value
-              })
-              .eq("id", food.id);
-
-            if (updateError) throw updateError;
-
-            alert("餐點修改成功！");
-            await loadAdminMenuList();
-            await loadMenus();
-          } catch (error) {
-            alert("修改失敗：" + error.message);
-          } finally {
-            saveButton.disabled = false;
-            saveButton.textContent = "儲存修改";
-          }
-        });
-
-        item.appendChild(saveButton);
-        list.appendChild(item);
-      });
-    } catch (error) {
-      $("adminMenuList").textContent =
-        "讀取菜單失敗：" + error.message;
+    if (!data || data.length === 0) {
+      list.textContent = "目前還沒有餐點。";
+      return;
     }
+
+    data.forEach(food => {
+      const item = document.createElement("div");
+      item.style.marginBottom = "16px";
+      item.style.padding = "12px";
+      item.style.border = "1px solid #ddd";
+      item.style.borderRadius = "10px";
+
+      const restaurantLabel = document.createElement("p");
+      restaurantLabel.textContent = "餐廳：" + food.restaurant_name;
+      item.appendChild(restaurantLabel);
+
+      const categoryLabel = document.createElement("label");
+      categoryLabel.textContent = "餐點分類";
+      item.appendChild(categoryLabel);
+
+      const category = document.createElement("select");
+
+      ["主餐", "飲料", "其他"].forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        category.appendChild(option);
+      });
+
+      category.value = food.category || "主餐";
+      item.appendChild(category);
+
+      const nameLabel = document.createElement("label");
+      nameLabel.textContent = "餐點名稱";
+      item.appendChild(nameLabel);
+
+      const name = document.createElement("input");
+      name.type = "text";
+      name.value = food.name;
+      item.appendChild(name);
+
+      const priceLabel = document.createElement("label");
+      priceLabel.textContent = "價格（元）";
+      item.appendChild(priceLabel);
+
+      const price = document.createElement("input");
+      price.type = "number";
+      price.min = "0.1";
+      price.step = "0.1";
+      price.value = food.price;
+      item.appendChild(price);
+
+      // 儲存修改按鈕
+      const saveButton = document.createElement("button");
+      saveButton.textContent = "儲存修改";
+
+      saveButton.addEventListener("click", async () => {
+        const newName = name.value.trim();
+        const newPrice = Number(price.value);
+
+        if (!newName) {
+          alert("請輸入餐點名稱。");
+          return;
+        }
+
+        if (!Number.isFinite(newPrice) || newPrice < 0.1) {
+          alert("價格必須是大於 0 的數字。");
+          return;
+        }
+
+        saveButton.disabled = true;
+        saveButton.textContent = "儲存中...";
+
+        try {
+          const { error: updateError } = await client
+            .from("menu_items")
+            .update({
+              name: newName,
+              price: newPrice,
+              category: category.value
+            })
+            .eq("id", food.id);
+
+          if (updateError) throw updateError;
+
+          alert("餐點修改成功！");
+          await loadAdminMenuList();
+          await loadMenus();
+        } catch (error) {
+          alert("修改失敗：" + error.message);
+        } finally {
+          saveButton.disabled = false;
+          saveButton.textContent = "儲存修改";
+        }
+      });
+
+      item.appendChild(saveButton);
+
+      // 刪除單一餐點按鈕
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "刪除餐點";
+      deleteButton.style.marginLeft = "8px";
+
+      deleteButton.addEventListener("click", async () => {
+        const confirmed = confirm(
+          `確定要刪除「${food.restaurant_name}」的「${food.name}」嗎？此操作無法直接復原。`
+        );
+
+        if (!confirmed) return;
+
+        deleteButton.disabled = true;
+        deleteButton.textContent = "刪除中...";
+
+        try {
+          const { error: deleteError } = await client
+            .from("menu_items")
+            .delete()
+            .eq("id", food.id)
+            .select("id");
+
+          if (deleteError) throw deleteError;
+
+          alert("刪除請求已完成，請確認菜單已更新。");
+          await loadAdminMenuList();
+          await loadMenus();
+        } catch (error) {
+          alert("刪除失敗：" + error.message);
+        } finally {
+          deleteButton.disabled = false;
+          deleteButton.textContent = "刪除餐點";
+        }
+      });
+
+      item.appendChild(deleteButton);
+      list.appendChild(item);
+    });
+  } catch (error) {
+    $("adminMenuList").textContent =
+      "讀取菜單失敗：" + error.message;
   }
+}
 
   async function init() {
     try {
