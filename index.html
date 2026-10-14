@@ -1301,8 +1301,8 @@ $("testSeatPasswordButton").addEventListener("click", testSeatPassword);
             return;
           }
 
-          if (!Number.isInteger(newPrice) || newPrice < 1) {
-            alert("價格必須是大於 0 的整數。");
+          if (!Number.isInteger(newPrice) || newPrice < 0.1) {
+            alert("價格必須是大於 0 的數字。");
             return;
           }
 
